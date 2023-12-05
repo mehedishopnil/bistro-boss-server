@@ -31,6 +31,7 @@ async function run() {
         // Get the database and collection on which to run the operation
         const menuCollection = client.db("bistroDB").collection("menu");
         const reviewsCollection = client.db("bistroDB").collection("reviews");
+        const cartCollection = client.db("bistroDB").collection("cart");
 
         app.get('/menu', async(req, res)=>{
             const result = await menuCollection.find().toArray();
@@ -39,6 +40,15 @@ async function run() {
 
         app.get('/reviews', async(req, res)=>{
             const result = await reviewsCollection.find().toArray();
+            res.send(result);
+        })
+
+        //Cart Collection::
+
+        app.post('/cart', async(req, res)=>{
+            const item = req.body;
+            console.log(item);
+            const result =await cartCollection.insertOne(item);
             res.send(result);
         })
 
