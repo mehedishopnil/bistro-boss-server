@@ -29,15 +29,28 @@ async function run() {
         await client.connect();
 
         // Get the database and collection on which to run the operation
+        const usersCollection = client.db("bistroDB").collection("users");
         const menuCollection = client.db("bistroDB").collection("menu");
         const reviewsCollection = client.db("bistroDB").collection("reviews");
         const cartCollection = client.db("bistroDB").collection("cart");
 
+
+        //review related apis
+        app.post('users', async(req, res)=>{
+            const user  = req.body;
+            console.log(user);
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
+
+
+        //review related apis
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
             res.send(result);
         })
 
+        //review related apis
         app.get('/reviews', async (req, res) => {
             const result = await reviewsCollection.find().toArray();
             res.send(result);
@@ -56,7 +69,6 @@ async function run() {
 
         app.post('/cart', async (req, res) => {
             const item = req.body;
-            console.log(item);
             const result = await cartCollection.insertOne(item);
             res.send(result);
         })
