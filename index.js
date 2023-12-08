@@ -36,12 +36,13 @@ async function run() {
 
 
         //review related apis
-        app.post('users', async(req, res)=>{
-            const user  = req.body;
+        app.post('/users', async (req, res) => {
+            const user = req.body;
             console.log(user);
             const result = await usersCollection.insertOne(user);
             res.send(result);
         })
+
 
 
         //review related apis
@@ -57,12 +58,12 @@ async function run() {
         })
 
         //Cart Collection apis::
-        app.get('/cart', async(req, res)=>{
-            const email =  req.query.email;
-            if(!email){
-              res.send([])  
+        app.get('/cart', async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                res.send([])
             }
-            const query = {email: email};
+            const query = { email: email };
             const result = await cartCollection.find(query).toArray();
             res.send(result);
         })
@@ -74,14 +75,14 @@ async function run() {
         })
 
         app.delete('/cart/:itemId', async (req, res) => {
-              const itemId = req.params.itemId;
-              const query = { _id: new ObjectId(itemId) };
-              
-              // Use async/await to wait for the deletion to complete
-              const result = await cartCollection.deleteOne(query);
-                res.send(result)
-          });
-          
+            const itemId = req.params.itemId;
+            const query = { _id: new ObjectId(itemId) };
+
+            // Use async/await to wait for the deletion to complete
+            const result = await cartCollection.deleteOne(query);
+            res.send(result)
+        });
+
 
 
         // Send a ping to confirm a successful connection
