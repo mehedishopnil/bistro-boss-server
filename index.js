@@ -16,13 +16,12 @@ const verifyJWT = (req, res, next) =>{
     }
 
         //bearer token
-    const token = authorization.split(' '[1]); 
+    const token = authorization.split(' ')[1]; 
     
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) =>{
-        if(error){
-            return res.status(401). send({error: true, message: 'unauthorized access'})
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
+        if(err){
+            return res.status(401).send({error: true, message: 'unauthorized access'})
         }
-
         req.decoded = decoded;
         next();
     })
@@ -58,14 +57,30 @@ async function run() {
         //jwt token::
         app.post ('/jwt', (req, res)=>{
             const user = req.body;
-            const token = jwt.sign (user, process.env.ACCESS_TOKEN_SECRET);
-            res.send(token);
-            console.log(token);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+            res.send({token});
         })
 
+        //Middleware::
+        //Warning: use verifyJWT before using verifyAdmin.
+        const verifyAdmin = async(req,res, next) =>{
+            const email = req.decoded.email;
+            const query = {email:email};
+            const user = await usersCollection.findOne(query);
+            if(user?.role !== 'admin'){
+                return res.status(403).send({error:true, message: 'forbidden message'});
+            }
+            next();
+        }
+
+        /**
+         * 0. do not show secure links to those who should not see the links.
+         * 1. use jwt token: verifyJWT
+         * 2. use verifyAdmin middleware
+        */
 
         //users related apis
-        app.get('/users', async(req, res)=> {
+        app.get('/users',verifyJWT, verifyAdmin, async(req, res)=> {
             const result =await usersCollection.find().toArray();
             res.send(result);
         })
@@ -85,7 +100,7 @@ async function run() {
         //email same
         //check admin
 
-        app.get('/users/admin/email',verifyJWT, async(req, res) => {
+        app.get('/users/admin/:email',verifyJWT, async(req, res) => {
             const email = req.params.email;
 
             if(req.decoded.email !== email) {
@@ -103,7 +118,7 @@ async function run() {
             const filter = {_id: new ObjectId(id)};
             const updateDoc = {
                 $set: {
-                  role: 'admin'
+                  role: 'admin',
                 },
               };
 
@@ -126,7 +141,7 @@ async function run() {
         })
 
         //Cart Collection apis::
-        app.get('/cart', verifyJWT, async (req, res) => {
+        app.get('/cart',verifyJWT, async(req, res) => {
             const email = req.query.email;
             if (!email) {
                 res.send([])
