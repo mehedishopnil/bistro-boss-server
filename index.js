@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY)
 
 //middleware
 app.use(cors());
@@ -163,7 +164,7 @@ async function run() {
 
             const decodedEmail = req.decoded.email;
             if (email !== decodedEmail) {
-                return res.status(403).send({ error: true, message: 'porviden access' })
+                return res.status(403).send({ error: true, message: 'forbidden access' })
             }
 
             const query = { email: email };
@@ -185,6 +186,22 @@ async function run() {
             const result = await cartCollection.deleteOne(query);
             res.send(result)
         });
+
+
+        //create payment intent::
+        app.post('/create-payment-intent', async(req, res)=>{
+            const {price} = req.body;
+            const amount = price*100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount, 
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
 
 
 
