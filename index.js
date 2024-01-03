@@ -53,6 +53,7 @@ async function run() {
         const menuCollection = client.db("bistroDB").collection("menu");
         const reviewsCollection = client.db("bistroDB").collection("reviews");
         const cartCollection = client.db("bistroDB").collection("cart");
+        const paymentCollection = client.db("bistroDB").collection("payments");
 
 
         //jwt token::
@@ -189,9 +190,10 @@ async function run() {
 
 
         //create payment intent::
-        app.post('/create-payment-intent', async(req, res)=>{
+        app.post("/create-payment-intent", async (req, res) =>{
             const {price} = req.body;
             const amount = price*100;
+            console.log(amount, price);
 
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount, 
@@ -199,8 +201,19 @@ async function run() {
                 payment_method_types: ['card']
             });
             res.send({
-                clientSecret: paymentIntent.client_secret
+                clientSecret: paymentIntent.client_secret,
             })
+        })
+
+
+        // Payment related api::
+        app.post('/payments', verifyJWT, async(req, res)=>{
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+
+            const query = {_id: {$in: payment.cartItem.map(id => new ObjectId(id))}}
+            const deleteResult
+            res.send(result);
         })
 
 
@@ -212,7 +225,7 @@ async function run() {
         // Ensures that the client will close when you finish/error
         // await client.close();
     }
-}
+} 
 run().catch(console.dir);
 
 
