@@ -237,6 +237,58 @@ async function run() {
             })
         })
 
+        /**
+         * -----------------------------------
+         * BANGLA SYSTEM(Second best solution)
+         * -----------------------------------
+         * 1. Load all payments.
+         * 2. for each payment, get the menuItems array.
+         * 3. for each item in the menuItems array get the menuItem from the menu collection.
+         * 4. Put them in an array: allOrderedItems.
+         * 5. separate allOrderedItems by category using filter.
+         * 6. now get the quantity by using length: pizza.length.
+         * 7. for each category use reduce to get the total amount spent on this category.
+         */
+        
+
+        //First Best Solution::
+        app.get('/orderStats',verifyJWT, verifyAdmin, async(req, res)=>{
+            const pipeline = [
+                {
+                    $unwind: '$menuItems'
+                },
+                {
+                    $lookup:{
+                        from: 'menu',
+                        localField: 'menuItems',
+                        foreignField: '_id',
+                        as: 'menuItemsDetails'
+                    }
+                },
+                {
+                    $unwind: '$menuItemsDetails'
+                },
+                {
+                    $group: {
+                        _id: '$menuItemsDetails.category',
+                        itemCount: {$sum: 1},
+                        totalPrice: { $sum: '$menuItemsDetails.price'}
+                    }
+                },
+                {
+                    $project: {
+                        category: '$_id',
+                        count: '$itemCount',
+                        total: {$round: ['$totalPrice',2]},
+                        _id: 0,
+                    }
+                }
+            ]
+
+            const result = await paymentCollection.aggregate(pipeline).toArray();
+            res.send(result);
+        })
+
 
 
         // Send a ping to confirm a successful connection
